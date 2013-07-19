@@ -21,7 +21,10 @@ def startCrawl(crawlPath=None,crawlKey="stash"):
     if crawlKey=="":
         crawlKey="stash"
     
-    job = Job(crawlPath=crawlPath,crawlKey=crawlKey,aws_key=aws_key,aws_secret=aws_secret)
+    job = Job(crawlPath=crawlPath,
+              crawlKey=crawlKey,
+              aws_key=aws_key,
+              aws_secret=aws_secret)
     print "Beginning new job: %s" % job.jobID
     print "Crawling: %s" % job.crawlPath
     print "Crawl Type: %s" % job.crawlTypeSelected
