@@ -6,6 +6,7 @@ import time
 import uuid
 
 from FastTransfer.Job import crawlType,Job
+from FastTransfer.tasks import newJob
 
 aws_key=""
 aws_secret=""
@@ -24,6 +25,9 @@ def startCrawl(crawlPath=None,crawlKey="stash"):
     print "Beginning new job: %s" % job.jobID
     print "Crawling: %s" % job.crawlPath
     print "Crawl Type: %s" % job.crawlTypeSelected
+    
+    result = newJob.apply_async([job],queues="celery")
+    print result
     #submit Job object to celery
     #Job object spawns tasks
 
