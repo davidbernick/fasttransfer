@@ -9,13 +9,13 @@ celery.config_from_object('FastTransfer')
 def add(x, y):
     return x + y
 
-@celery.task
+@celery.task(serializer="pickle")
 def newJob(job):
     if job.crawlTypeSelected==crawlType["stash"]:
-        stashCrawl(job)
+        job.stashCrawl()
     elif job.crawlTypeSelected==crawlType["files"]:
-        filesCrawl(job)
+        job.filesCrawl()
     if job.crawlTypeSelected==crawlType["dir"]:
-        dirCrawl(job)
+        job.dirCrawl()
         
     return job.toJson()

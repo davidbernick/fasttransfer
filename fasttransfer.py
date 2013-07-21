@@ -30,7 +30,7 @@ def startCrawl(crawlPath=None,crawlKey="stash"):
     print "Crawl Type: %s" % job.crawlTypeSelected
     
     result = newJob.apply_async([job],queues="celery")
-    print result
+    job.logger.logger.info(("New result: %s") % (result))
     #submit Job object to celery
     #Job object spawns tasks
 
