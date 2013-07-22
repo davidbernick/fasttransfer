@@ -1,7 +1,13 @@
 from collections import deque
 import uuid
-import ConfigParser,os.path,httplib, urllib, urllib2, cookielib,base64,json
+import ConfigParser,os.path,httplib, urllib, urllib2, cookielib,base64,json,os
+from FastTransfer.FileContainer import FileContainer
+from FastTransfer.File import File
 import jsonpickle
+from .Log import Log
+from .utils import getConf
+from FastTransfer.tasks import processFile
+
 
 crawlType={
            "stash":0,
@@ -9,10 +15,11 @@ crawlType={
            "file":2
            }
 
+logger = Log().getLog()
 
 class Job:
-    
-    FileContainerCollection = None
+    global logger
+    FileContainerCollection = []
     crawlPath = None
     jobID = None
     crawlTypeSelected=None
@@ -21,70 +28,69 @@ class Job:
     bundle_num_files = 1000
     bundle_mb = 1000
     logobj = "FastTransfer.Log"
-    logger = None
     
     def __init__(self,crawlPath=None,
                  crawlKey=None,
                  aws_key=None,
                  aws_secret=None):
-        self.FileContainerCollection = deque()
+        self.FileContainerCollection = []
         self.crawlPath = crawlPath
         self.jobID = str(uuid.uuid4())
         self.crawlTypeSelected = crawlType[crawlKey]
         self.aws_key = aws_key
         self.aws_secret = aws_secret
-        self.getConf()
+        conf = getConf()
+        try:
+            self.bundle_num_files=conf["bundle_num_files"]
+        except:
+            pass
+        try:
+            self.bundle_mb=conf["bundle_mb"]
+        except:
+            pass
+        try:
+            self.logobj=conf["logobj"]
+        except:
+            pass
+
+
+    def stashCrawl(self):
+        fc = FileContainer()
+        for (path, dirs, files) in os.walk(self.crawlPath):
+            for fi in files:
+                kilo_byte_size = fc.containersize/1024
+                mega_byte_size = kilo_byte_size/1024
+                rfile = os.path.join(path,fi)
+                if os.path.islink(rfile):
+                    continue
+                statinfo = os.stat(rfile)
+                if fc.numfiles<self.bundle_num_files or mega_byte_size<self.bundle_mb:
+                    f = File(filepath=rfile,statinfo=statinfo)
+                    fc.addFile(f)
+                    logger.debug("Size %s MB %s" % (mega_byte_size,fc.numfiles))
+                    continue
+                else:
+                    logger.debug("New Job")
+                    self.FileContainerCollection.append(fc)
+                    fc = FileContainer()
+                    f = File(filepath=rfile,statinfo=statinfo)
+                    fc.addFile(f)
+                    continue
+            #put final stuff in    
+        logger.info("Remaining: %s MB %s Files" % (fc.containersize,fc.numfiles))
+        self.FileContainerCollection.append(fc)
+        for fc in self.FileContainerCollection:
+            processFile.apply_async([fc],queues="celery")
+        return self
         
-        if self.logobj:
-            loggingclass = self.get_class(self.logobj)
-            if self.logobj == "FastTransfer.Log.Log":
-                config = ConfigParser.RawConfigParser()
-                try:
-                    config.read(os.path.expanduser("~")+'/.fasttransfer.conf')
-                    loglevel = config.get('Logging', "loglevel")
-                    loglocation = config.get('Logging', "loglocation")
-                    logformat = config.get('Logging', "logformat")
-                    logapp = config.get('Logging', "logapp")                     
-                except Exception,e:
-                    raise Exception("Need valid ~/.fasttransfer.conf: %s" % (e))
-                self.logger = loggingclass(loglevel=loglevel,
-                                     loglocation=loglocation,
-                                     logformat=logformat,
-                                     logapp=logapp)
-                self.logger.logger.info("Log Started")
-                
+    def filesCrawl(self):
+        return
+
+    def dirCrawl(self):
+        return
+
         
     def toJson(self):
         return jsonpickle.encode(self,unpicklable=False)
 
-    def get_class(self,kls ):
-        parts = kls.split('.')
-        module = ".".join(parts[:-1])
-        m = __import__( module )
-        for comp in parts[1:]:
-            m = getattr(m, comp)            
-        return m    
-
-    def __getstate__(self):
-        result = self.__dict__.copy()
-        del result['logger']
-        return result
-
-    def stashCrawl(self):
-        pass
         
-    def filesCrawl(self):
-        pass
-
-    def dirCrawl(self):
-        pass
-    
-    def getConf(self):
-        config = ConfigParser.ConfigParser()
-        try:
-            config.read(os.path.expanduser("~")+'/.fasttransfer.conf')
-            self.bundle_num_files = config.getint('FastTransfer', "bundle_num_files")
-            self.bundle_mb = config.getint('FastTransfer', "bundle_mb")
-            self.logobj = config.get('FastTransfer', "logobj")
-        except Exception,e:
-            raise Exception("Need valid ~/.fasttransfer.conf: %s" % (e))

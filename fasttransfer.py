@@ -6,19 +6,22 @@ import time
 import uuid
 
 from FastTransfer.Job import crawlType,Job
-from FastTransfer.tasks import newJob
+from FastTransfer.tasks import newJob,processFile
+from FastTransfer.Log import Log
 
 aws_key=""
 aws_secret=""
 DRYRUN=False
 
+logger = Log.getLog()
 
 def startCrawl(crawlPath=None,crawlKey="stash"):
     global aws_key
     global aws_secret
     global DRYRUN
+    global logger
 
-    if crawlKey=="":
+    if crawlKey=="" or crawlKey==None:
         crawlKey="stash"
     
     job = Job(crawlPath=crawlPath,
@@ -28,11 +31,11 @@ def startCrawl(crawlPath=None,crawlKey="stash"):
     print "Beginning new job: %s" % job.jobID
     print "Crawling: %s" % job.crawlPath
     print "Crawl Type: %s" % job.crawlTypeSelected
-    
+
     result = newJob.apply_async([job],queues="celery")
-    job.logger.logger.info(("New result: %s") % (result))
-    #submit Job object to celery
-    #Job object spawns tasks
+    logger.info(("Celery ID: %s,Job ID: %s") % (result.id,job.jobID))
+    job_result = result.get(timeout=10)
+    #logger.info( ("Result: %s") % (job))
 
 def help():
     print 'fasttransfer.py -k <aws key> -s <aws secret key> -n --crawlPath path --crawlKey key'
