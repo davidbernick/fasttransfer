@@ -35,7 +35,7 @@ def startCrawl(crawlPath=None,crawlKey="stash"):
     result = newJob.apply_async([job],queues="celery")
     logger.info(("Celery ID: %s,Job ID: %s") % (result.id,job.jobID))
     job_result = result.get(timeout=10)
-    #logger.info( ("Result: %s") % (job))
+    #logger.info( ("Result: %s") % (job_result))
 
 def help():
     print 'fasttransfer.py -k <aws key> -s <aws secret key> -n --crawlPath path --crawlKey key'

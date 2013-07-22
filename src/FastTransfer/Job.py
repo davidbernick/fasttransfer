@@ -6,7 +6,6 @@ from FastTransfer.File import File
 import jsonpickle
 from .Log import Log
 from .utils import getConf
-from FastTransfer.tasks import processFile
 
 
 crawlType={
@@ -55,6 +54,7 @@ class Job:
 
 
     def stashCrawl(self):
+        from FastTransfer.tasks import processFile
         fc = FileContainer()
         for (path, dirs, files) in os.walk(self.crawlPath):
             for fi in files:
@@ -64,7 +64,7 @@ class Job:
                 if os.path.islink(rfile):
                     continue
                 statinfo = os.stat(rfile)
-                if fc.numfiles<self.bundle_num_files or mega_byte_size<self.bundle_mb:
+                if fc.numfiles<self.bundle_num_files and mega_byte_size<self.bundle_mb:
                     f = File(filepath=rfile,statinfo=statinfo)
                     fc.addFile(f)
                     logger.debug("Size %s MB %s" % (mega_byte_size,fc.numfiles))
@@ -80,7 +80,7 @@ class Job:
         logger.info("Remaining: %s MB %s Files" % (fc.containersize,fc.numfiles))
         self.FileContainerCollection.append(fc)
         for fc in self.FileContainerCollection:
-            processFile.apply_async([fc],queues="celery")
+            processFile.apply_async([fc],queues="files")
         return self
         
     def filesCrawl(self):

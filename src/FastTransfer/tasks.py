@@ -1,7 +1,7 @@
 from celery import Celery
 import os
 import ConfigParser
-from .Job import crawlType
+import Job
 
 celery = Celery('tasks', 
                 broker='amqp://guest@localhost//',
@@ -28,11 +28,11 @@ def add(x, y):
 
 @celery.task
 def newJob(job):
-    if job.crawlTypeSelected==crawlType["stash"]:
+    if job.crawlTypeSelected==Job.crawlType["stash"]:
         job.stashCrawl()
-    elif job.crawlTypeSelected==crawlType["files"]:
+    elif job.crawlTypeSelected==Job.crawlType["files"]:
         job.filesCrawl()
-    if job.crawlTypeSelected==crawlType["dir"]:
+    if job.crawlTypeSelected==Job.crawlType["dir"]:
         job.dirCrawl()
     return job.toJson()
 
