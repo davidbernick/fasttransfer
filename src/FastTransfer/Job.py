@@ -53,8 +53,9 @@ class Job:
             pass
 
 
+    #Used for building crawls that stash everytime it hits a limit.
     def stashCrawl(self):
-        from FastTransfer.tasks import processFile
+        from FastTransfer.tasks import processFileContainer
         fc = FileContainer()
         for (path, dirs, files) in os.walk(self.crawlPath):
             for fi in files:
@@ -76,11 +77,11 @@ class Job:
                     f = File(filepath=rfile,statinfo=statinfo)
                     fc.addFile(f)
                     continue
-            #put final stuff in    
+        #put final stuff in    
         logger.info("Remaining: %s MB %s Files" % (fc.containersize,fc.numfiles))
         self.FileContainerCollection.append(fc)
         for fc in self.FileContainerCollection:
-            processFile.apply_async([fc],queues="files")
+            processFileContainer.apply_async([fc],queue="files")
         return self
         
     def filesCrawl(self):

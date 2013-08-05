@@ -2,24 +2,12 @@ from celery import Celery
 import os
 import ConfigParser
 import Job
+import time
+from FastTransfer import celeryconfig
 
-celery = Celery('tasks', 
-                broker='amqp://guest@localhost//',
-                backend='amqp://guest@localhost//')
-celery.config_from_object('FastTransfer')
-
-config = ConfigParser.ConfigParser()
-try:
-    config.read(os.path.expanduser("~")+'/.fasttransfer.conf')
-    broker = config.get('Celery', "broker")
-    backend = config.get('Celery', "backend")
-    celery = Celery('tasks', 
-                    broker=broker,
-                    backend=backend)
-    celery.config_from_object('FastTransfer')
-
-except Exception,e:
-    raise Exception("Need valid ~/.fasttransfer.conf: %s" % (e))
+celery = Celery('tasks' )
+celery.config_from_object(celeryconfig)
+print celery
 
 
 @celery.task
@@ -37,5 +25,11 @@ def newJob(job):
     return job.toJson()
 
 @celery.task
-def processFile(fc_container):
+def processFileContainer(fc_container):
+    #tags for each file: mtime, atime, owner, group, dir, parentdir, filename
+
+    #for each file
+    #see if file already exists
+    #see if it's datestamp is different
+    #if different, upload
     return 0

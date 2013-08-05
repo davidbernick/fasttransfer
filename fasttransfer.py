@@ -6,7 +6,7 @@ import time
 import uuid
 
 from FastTransfer.Job import crawlType,Job
-from FastTransfer.tasks import newJob,processFile
+from FastTransfer.tasks import newJob,processFileContainer
 from FastTransfer.Log import Log
 
 aws_key=""
@@ -32,7 +32,7 @@ def startCrawl(crawlPath=None,crawlKey="stash"):
     print "Crawling: %s" % job.crawlPath
     print "Crawl Type: %s" % job.crawlTypeSelected
 
-    result = newJob.apply_async([job],queues="celery")
+    result = newJob.apply_async([job],queue="celery")
     logger.info(("Celery ID: %s,Job ID: %s") % (result.id,job.jobID))
     job_result = result.get(timeout=10)
     #logger.info( ("Result: %s") % (job_result))
@@ -44,6 +44,7 @@ def help():
     print '--crawlPath path'
     print '--crawlKey stash:dir:file'
     print '-n (dry run)'
+    print 'eg: PYTHONPATH=$PYTHONPATH:/Location/of/tree/fasttransfer/src python fasttransfer.py -k AKIAxxxxxx -s xxxx -n --crawlPath /var --crawlKey stash'
     
 
 def main(argv):

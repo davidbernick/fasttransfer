@@ -10,4 +10,8 @@ class File(dict):
         self["mode"]=statinfo.st_mode
         self["mtime"]=statinfo.st_mtime
         self["ctime"]=statinfo.st_ctime
-        self["dir"]=os.path.dirname(filepath)  
+        self["dir"]=os.path.dirname(filepath)
+        
+    def getTags(self):
+        return self
+          
