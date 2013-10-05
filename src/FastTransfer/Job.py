@@ -4,8 +4,9 @@ import ConfigParser,os.path,httplib, urllib, urllib2, cookielib,base64,json,os
 from FastTransfer.FileContainer import FileContainer
 from FastTransfer.File import File
 import jsonpickle
-from .Log import Log
 from .utils import getConf
+import config_log
+import logging
 
 
 crawlType={
@@ -14,7 +15,7 @@ crawlType={
            "file":2
            }
 
-logger = Log().getLog()
+logger = logging.getLogger("job")
 
 class Job:
     global logger
@@ -26,7 +27,6 @@ class Job:
     aws_secret = None
     bundle_num_files = 1000
     bundle_mb = 1000
-    logobj = "FastTransfer.Log"
     
     def __init__(self,crawlPath=None,
                  crawlKey=None,
@@ -45,10 +45,6 @@ class Job:
             pass
         try:
             self.bundle_mb=conf["bundle_mb"]
-        except:
-            pass
-        try:
-            self.logobj=conf["logobj"]
         except:
             pass
 

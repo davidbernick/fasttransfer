@@ -7,13 +7,14 @@ import uuid
 
 from FastTransfer.Job import crawlType,Job
 from FastTransfer.tasks import newJob,processFileContainer
-from FastTransfer.Log import Log
+import FastTransfer.config_log
+import logging
 
 aws_key=""
 aws_secret=""
 DRYRUN=False
 
-logger = Log.getLog()
+logger = logging.getLogger("fasttransfer-cmi")
 
 def startCrawl(crawlPath=None,crawlKey="stash"):
     global aws_key
@@ -77,7 +78,6 @@ def main(argv):
         print 'need keys'
         sys.exit()
     else:
-        print crawlPath
         startCrawl(crawlPath=crawlPath,crawlKey=crawlKey)
             
 
